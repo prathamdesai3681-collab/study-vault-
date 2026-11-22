@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en" class="dark theme-cyan">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Garage's Study Vault v4.0 — Full Offline Suite</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons (Pinned Stable UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <!-- Marked.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <link rel="stylesheet" href="./css/style.css?v=3">
+</head>
+<body class="min-h-screen text-slate-100 relative pb-28 selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- Interactive Cellular Background Canvas -->
+  <canvas id="cellCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+
+    <!-- TOP HUD HEADER -->
+    <header class="glass-panel rounded-2xl p-4 mb-6 shadow-2xl relative overflow-hidden">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3 w-full lg:w-auto justify-between lg:justify-start">
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl accent-gradient-bg flex items-center justify-center font-extrabold text-slate-950 text-xl shadow-lg">
+              V4
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h1 class="text-xl font-extrabold tracking-tight neon-text-glow">GARAGE'S VAULT</h1>
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-800 text-slate-300 border border-slate-700">v4.0</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 pulse-dot"></span> OFFLINE READY
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 flex items-center space-x-2 mt-0.5 font-mono">
+                <span id="hudDate">Nov 22, 2026</span>
+                <span>•</span>
+                <span id="hudClock" class="accent-text font-bold">00:00:00 AM</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Mobile Exam Radar Quick Launch -->
+          <button onclick="openModal('examModal')" class="lg:hidden p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700">
+            <i data-lucide="radar" class="w-5 h-5 accent-text"></i>
+          </button>
+        </div>
+
+        <!-- XP & Level Progress Bar -->
+        <div class="w-full lg:w-96 flex flex-col space-y-1.5">
+          <div class="flex justify-between items-center text-xs font-semibold">
+            <span class="text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="award" class="w-4 h-4 accent-text"></i>
+              <span id="levelTitle">Level 3: Scholar</span>
+            </span>
+            <span class="text-slate-400 font-mono"><span id="currentXP" class="accent-text font-bold">1,250</span> / <span id="targetXP">2,000</span> XP</span>
+          </div>
+          <div class="w-full h-3 bg-slate-900/90 rounded-full p-0.5 border border-slate-800 relative overflow-hidden">
+            <div id="xpBar" class="h-full rounded-full xp-shimmer transition-all duration-500" style="width: 62.5%;"></div>
+          </div>
+        </div>
+
+        <!-- Controls & Utility Actions -->
+        <div class="flex items-center space-x-2.5 w-full lg:w-auto justify-end">
+          
+          <!-- Exam Radar Button -->
+          <button id="examRadarBtn" onclick="openModal('examModal')" class="hidden sm:flex items-center space-x-2 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold border border-slate-700 transition">
+            <i data-lucide="radar" class="w-4 h-4 accent-text"></i>
+            <span>Exams</span>
+            <span id="examBadge" class="bg-rose-500/20 text-rose-300 text-[10px] px-1.5 py-0.5 rounded-full border border-rose-500/30">2 Active</span>
+          </button>
+
+          <!-- Daily Streak -->
+          <div class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold" title="Daily Study Streak">
+            <i data-lucide="flame" class="w-4 h-4 text-amber-400 fill-amber-400/30"></i>
+            <span id="streakCount">5 Days</span>
+          </div>
+
+          <!-- SFX Toggle -->
+          <button id="sfxToggleBtn" onclick="toggleSFX()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition" title="Toggle Sound Effects">
+            <i id="sfxIcon" data-lucide="volume-2" class="w-4 h-4"></i>
+          </button>
+
+          <!-- Theme Switcher -->
+          <select id="themeSelect" onchange="changeTheme(this.value)" class="bg-slate-800/80 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold px-2.5 py-2 focus:outline-none focus:border-cyan-400 cursor-pointer">
+            <option value="theme-cyan">Bio-Cyan</option>
+            <option value="theme-violet">Cyber-Violet</option>
+            <option value="theme-matrix">Matrix-Green</option>
+            <option value="theme-crimson">Crimson-Core</option>
+          </select>
+
+          <!-- DB & Backup Vault Button -->
+          <button id="dbVaultBtn" onclick="openDatabaseModal()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition" title="Database & Offline Backup Vault">
+            <i data-lucide="database" class="w-4 h-4 accent-text"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT AREA -->
+    <main class="w-full">
+
+      <!-- TAB 1: FOCUS & NEURAL ENGINE -->
+      <section id="tab-focus" class="tab-content active space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Quantum Focus Reactor Card -->
+          <div id="reactorCard" class="lg:col-span-7 glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[460px]">
+            <div class="flex justify-between items-center mb-4">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="atom" class="w-5 h-5 accent-text"></i>
+                <h2 class="font-bold text-lg tracking-wide">QUANTUM FOCUS REACTOR</h2>
+              </div>
+              <button onclick="toggleZenMode()" class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold border border-slate-700 text-slate-300 flex items-center space-x-1.5">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                <span>Zen Mode</span>
+              </button>
+            </div>
+
+            <!-- SVG Reactor Visualizer Rings -->
+            <div class="relative w-64 h-64 sm:w-72 sm:h-72 mx-auto my-4 flex items-center justify-center">
+              <svg class="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+                <!-- Outer Ring -->
+                <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" class="text-slate-800" stroke-width="2"/>
+                <circle cx="100" cy="100" r="90" fill="none" stroke="var(--accent)" class="spin-ring-cw opacity-60" stroke-width="2" stroke-dasharray="15 35 45 15"/>
+                <!-- Middle Ring -->
+                <circle cx="100" cy="100" r="75" fill="none" stroke="currentColor" class="text-slate-800" stroke-width="2"/>
+                <circle cx="100" cy="100" r="75" fill="none" stroke="var(--accent)" class="spin-ring-ccw opacity-80" stroke-width="3" stroke-dasharray="60 40 20 50"/>
+                <!-- Inner Animated Progress Ring -->
+                <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6"/>
+                <circle id="timerProgressCircle" cx="100" cy="100" r="60" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="0" transform="rotate(-90 100 100)" class="transition-all duration-1000"/>
+              </svg>
+
+              <!-- Center Display -->
+              <div class="relative z-10 text-center flex flex-col items-center justify-center">
+                <span id="timerModeLabel" class="text-xs uppercase font-mono tracking-widest text-slate-400 font-semibold mb-1">DEEP FOCUS</span>
+                <span id="timerDisplay" class="text-4xl sm:text-5xl font-black font-mono tracking-tighter text-white">25:00</span>
+                <span id="timerStatus" class="text-[10px] text-slate-400 font-mono mt-1">+50 XP ON COMPLETION</span>
+              </div>
+            </div>
+
+            <!-- Presets & Controls -->
+            <div class="space-y-4">
+              <!-- Presets -->
+              <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="setTimerPreset(-300, true)" class="px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-xs font-mono text-slate-300">-5m</button>
+                <button onclick="setTimerPreset(25*60)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold accent-text border border-slate-700">25m Focus</button>
+                <button onclick="setTimerPreset(50*60)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700">50m Deep</button>
+                <button onclick="setTimerPreset(5*60)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-400 border border-slate-700">5m Break</button>
+                <button onclick="setTimerPreset(300, true)" class="px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-xs font-mono text-slate-300">+5m</button>
+              </div>
+
+              <!-- Main Control Buttons -->
+              <div class="flex justify-center space-x-3">
+                <button id="startTimerBtn" onclick="toggleTimer()" class="px-8 py-3 rounded-2xl accent-gradient-bg font-extrabold text-slate-950 text-sm shadow-lg flex items-center space-x-2 hover:opacity-95 transition">
+                  <i id="startTimerIcon" data-lucide="play" class="w-4 h-4 fill-slate-950"></i>
+                  <span id="startTimerText">Initiate Reactor</span>
+                </button>
+                <button onclick="resetTimer()" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-bold border border-slate-700 transition" title="Reset Timer">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neural Isochronic & Binaural Synth Engine Card -->
+          <div class="lg:col-span-5 glass-panel glass-panel-hover rounded-3xl p-6 flex flex-col justify-between min-h-[460px]">
+            <div>
+              <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-2">
+                  <i data-lucide="waves" class="w-5 h-5 accent-text"></i>
+                  <h2 class="font-bold text-lg tracking-wide">NEURAL ISOCHRONIC ENGINE</h2>
+                </div>
+                <button onclick="muteAllAudio()" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 border border-slate-700">Mute All</button>
+              </div>
+              <p class="text-xs text-slate-400 mb-4">Web Audio synthesized binaural brainwaves & solfeggio frequencies for optimal focus.</p>
+
+              <!-- Real-time Frequency Spectrum Visualizer Canvas -->
+              <div class="w-full h-24 bg-slate-950/80 rounded-2xl border border-slate-800 p-2 mb-5 relative overflow-hidden">
+                <canvas id="audioVisualizerCanvas" class="w-full h-full"></canvas>
+              </div>
+
+              <!-- Audio Generator Toggles -->
+              <div class="space-y-3">
+                
+                <!-- 174Hz Solfeggio Drone -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">174Hz Solfeggio Drone</div>
+                    <div class="text-[10px] text-slate-400">Deep grounding foundation tone</div>
+                  </div>
+                  <button id="btn-solfeggio" onclick="toggleAudioSynth('solfeggio')" class="w-12 h-6 rounded-full bg-slate-800 relative transition-colors border border-slate-700">
+                    <div class="toggle-dot absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+                  </button>
+                </div>
+
+                <!-- Deep Brown Noise -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">Deep Brown Noise</div>
+                    <div class="text-[10px] text-slate-400">Low-frequency acoustic shield</div>
+                  </div>
+                  <button id="btn-brown" onclick="toggleAudioSynth('brown')" class="w-12 h-6 rounded-full bg-slate-800 relative transition-colors border border-slate-700">
+                    <div class="toggle-dot absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+                  </button>
+                </div>
+
+                <!-- 40Hz Gamma Pulse -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">40Hz Gamma Isochronic Pulse</div>
+                    <div class="text-[10px] text-slate-400">Cognitive peak performance entrainment</div>
+                  </div>
+                  <button id="btn-gamma" onclick="toggleAudioSynth('gamma')" class="w-12 h-6 rounded-full bg-slate-800 relative transition-colors border border-slate-700">
+                    <div class="toggle-dot absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Master Volume Control -->
+            <div class="mt-4 pt-4 border-t border-slate-800/80">
+              <div class="flex justify-between items-center mb-1.5 text-xs font-mono">
+                <span class="text-slate-400">Synth Master Output</span>
+                <span id="volumeValue" class="accent-text font-bold">50%</span>
+              </div>
+              <input type="range" id="masterVolume" min="0" max="1" step="0.01" value="0.5" oninput="setMasterVolume(this.value)" class="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bento Row: Weekly Focus Activity & Daily Missions -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          <!-- Weekly Focus Grid -->
+          <div class="md:col-span-7 glass-panel rounded-3xl p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-sm font-bold tracking-wide flex items-center space-x-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 accent-text"></i>
+                <span>WEEKLY FOCUS ACTIVITY</span>
+              </h3>
+              <span class="text-xs text-slate-400 font-mono">Target: 20 hrs/wk</span>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-2 h-36 items-end pt-4">
+              <!-- Day Bars -->
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 45%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Mon</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 70%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Tue</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 85%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Wed</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 60%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Thu</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 90%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Fri</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full accent-gradient-bg rounded-t-lg transition-all" style="height: 40%;"></div>
+                <span class="text-[10px] font-mono text-slate-400">Sat</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div class="w-full bg-cyan-500/30 rounded-t-lg border-t-2 border-cyan-400 transition-all" style="height: 55%;"></div>
+                <span class="text-[10px] font-mono text-slate-300 font-bold">Sun</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Missions -->
+          <div class="md:col-span-5 glass-panel rounded-3xl p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold tracking-wide flex items-center space-x-2">
+                  <i data-lucide="target" class="w-4 h-4 accent-text"></i>
+                  <span>DAILY MISSIONS</span>
+                </h3>
+                <span class="text-[11px] font-mono accent-text">+25 XP Each</span>
+              </div>
+
+              <div id="missionsList" class="space-y-3">
+                <!-- Mission 1 -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="m1" onchange="claimMissionXP(this)" class="w-4 h-4 rounded accent-cyan-400 cursor-pointer">
+                    <label for="m1" class="text-xs font-medium text-slate-200 cursor-pointer">Complete 1 Deep Focus Session</label>
+                  </div>
+                  <span class="text-[10px] font-mono text-slate-400">1/1</span>
+                </div>
+                <!-- Mission 2 -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="m2" onchange="claimMissionXP(this)" class="w-4 h-4 rounded accent-cyan-400 cursor-pointer">
+                    <label for="m2" class="text-xs font-medium text-slate-200 cursor-pointer">Review 5 Flashcards</label>
+                  </div>
+                  <span class="text-[10px] font-mono text-slate-400">5/5</span>
+                </div>
+                <!-- Mission 3 -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+                  <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="m3" onchange="claimMissionXP(this)" class="w-4 h-4 rounded accent-cyan-400 cursor-pointer">
+                    <label for="m3" class="text-xs font-medium text-slate-200 cursor-pointer">Save 1 Markdown Note</label>
+                  </div>
+                  <span class="text-[10px] font-mono text-slate-400">0/1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 2: STUDY MAP -->
+      <section id="tab-map" class="tab-content space-y-6">
+        <div class="glass-panel rounded-3xl p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-lg font-bold flex items-center gap-2">
+                <i data-lucide="map" class="w-5 h-5 accent-text"></i>
+                <span>CURRICULUM STUDY MAP</span>
+              </h2>
+              <p class="text-xs text-slate-400">Track module progress and earn +10 XP for each completed subtopic.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="addMapLevelPrompt()" class="px-3.5 py-2 rounded-xl accent-gradient-bg font-bold text-xs text-slate-950 flex items-center gap-1.5 shadow">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Level
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Study Tree Container -->
+          <div id="studyMapContainer" class="space-y-6">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: 3D FLASHCARDS -->
+      <section id="tab-cards" class="tab-content space-y-6">
+        <div class="max-w-2xl mx-auto space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-lg font-bold flex items-center gap-2">
+                <i data-lucide="layers" class="w-5 h-5 accent-text"></i>
+                <span>3D NEURAL FLASHCARDS</span>
+              </h2>
+              <p class="text-xs text-slate-400">Click card to flip • Mastered cards yield +10 XP</p>
+            </div>
+            <button onclick="openModal('addCardModal')" class="px-3.5 py-2 rounded-xl accent-gradient-bg font-bold text-xs text-slate-950 flex items-center gap-1.5 shadow">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Card
+            </button>
+          </div>
+
+          <!-- 3D Perspective Flip Card Container -->
+          <div class="perspective-1000 w-full h-80 cursor-pointer" onclick="flipCard()">
+            <div id="flashcardInner" class="transform-style-3d relative w-full h-full rounded-3xl glass-panel border border-slate-700/80 p-8 shadow-2xl flex flex-col justify-between">
+              
+              <!-- Front Side -->
+              <div class="absolute inset-0 p-8 flex flex-col justify-between backface-hidden bg-slate-900/90 rounded-3xl border border-slate-700">
+                <div class="flex justify-between items-center">
+                  <span id="cardTopic" class="px-3 py-1 rounded-full text-[11px] font-bold accent-bg text-slate-950 uppercase tracking-wider">Physics</span>
+                  <span id="cardCounter" class="text-xs font-mono text-slate-400">Card 1 of 5</span>
+                </div>
+                <div class="text-center px-4">
+                  <span class="text-xs text-slate-400 uppercase tracking-widest block mb-2 font-mono">QUESTION</span>
+                  <p id="cardQuestion" class="text-xl font-bold text-slate-100 leading-relaxed">What is Heisenberg's Uncertainty Principle?</p>
+                </div>
+                <div class="text-center text-xs text-slate-400 font-mono flex items-center justify-center gap-1">
+                  <i data-lucide="rotate-cw" class="w-3.5 h-3.5 accent-text"></i> Click anywhere to reveal answer
+                </div>
+              </div>
+
+              <!-- Back Side -->
+              <div class="absolute inset-0 p-8 flex flex-col justify-between backface-hidden rotate-y-180 bg-slate-950/95 rounded-3xl border border-cyan-500/40">
+                <div class="flex justify-between items-center">
+                  <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase">Answer</span>
+                  <span class="text-xs font-mono accent-text font-bold">REVEALED</span>
+                </div>
+                <div class="text-center px-4">
+                  <p id="cardAnswer" class="text-base font-medium text-slate-200 leading-relaxed">It states that one cannot simultaneously know both the exact position and momentum of a particle with absolute precision.</p>
+                </div>
+                <div class="text-center text-xs text-slate-400 font-mono">
+                  Use rating buttons below
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Controls & Rating Actions -->
+          <div class="flex justify-between items-center pt-2">
+            <button onclick="prevCard()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700 flex items-center space-x-1.5">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i> Previous
+            </button>
+            <div class="flex space-x-3">
+              <button onclick="rateCard(false)" class="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-500/40 flex items-center space-x-1.5">
+                <i data-lucide="x-circle" class="w-4 h-4"></i> Needs Review
+              </button>
+              <button onclick="rateCard(true)" class="px-5 py-2 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold flex items-center space-x-1.5 shadow-lg">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Mastered (+10 XP)
+              </button>
+            </div>
+            <button onclick="nextCard()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700 flex items-center space-x-1.5">
+              Next <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: SMART LINK HUB -->
+      <section id="tab-links" class="tab-content space-y-6">
+        <div class="glass-panel rounded-3xl p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-lg font-bold flex items-center gap-2">
+                <i data-lucide="link" class="w-5 h-5 accent-text"></i>
+                <span>SMART RESOURCE LINK HUB</span>
+              </h2>
+              <p class="text-xs text-slate-400">Curated quick links for lectures, PDFs, reference material, and practice sets.</p>
+            </div>
+            <button onclick="openModal('addLinkModal')" class="px-3.5 py-2 rounded-xl accent-gradient-bg font-bold text-xs text-slate-950 flex items-center gap-1.5 shadow">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Resource Link
+            </button>
+          </div>
+
+          <!-- Category Filters & Search -->
+          <div class="flex flex-col sm:flex-row gap-3 mb-6 justify-between items-center">
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto" id="linkCategoryPills">
+              <button onclick="filterLinks('All')" class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold accent-text active-link-filter">All</button>
+              <button onclick="filterLinks('Lectures')" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">Lectures</button>
+              <button onclick="filterLinks('PDFs')" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">PDFs</button>
+              <button onclick="filterLinks('Websites')" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">Websites</button>
+              <button onclick="filterLinks('Revision')" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">Revision</button>
+            </div>
+            <div class="relative w-full sm:w-64">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="linkSearchInput" oninput="renderSmartLinks()" placeholder="Search links..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400">
+            </div>
+          </div>
+
+          <!-- Resource Link Cards Grid -->
+          <div id="smartLinksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamic JS render -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: NOTES & MARKDOWN -->
+      <section id="tab-notes" class="tab-content space-y-6">
+        
+        <!-- Pinned Mnemonics & Formulas Bar -->
+        <div class="glass-panel rounded-3xl p-5">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 accent-text"></i>
+              <span>PINNED MNEMONICS & FORMULAS</span>
+            </h3>
+            <button onclick="openModal('addMnemonicModal')" class="text-xs font-bold accent-text hover:underline flex items-center gap-1">
+              + Add Formula
+            </button>
+          </div>
+          <div id="mnemonicsBar" class="flex space-x-3 overflow-x-auto pb-2">
+            <!-- Dynamic Mnemonic Cards -->
+          </div>
+        </div>
+
+        <!-- Split Live Markdown Editor & HTML Preview -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Left: Textarea Editor -->
+          <div class="glass-panel rounded-3xl p-5 flex flex-col space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 font-mono">
+                <i data-lucide="edit-3" class="w-4 h-4 accent-text"></i> MARKDOWN SCRATCHPAD
+              </span>
+              <div class="text-xs font-mono text-slate-400">
+                <span id="wordCount">0 words</span> • <span id="charCount">0 chars</span>
+              </div>
+            </div>
+            
+            <input type="text" id="noteTitleInput" placeholder="Note Title..." class="bg-slate-900/80 border border-slate-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400">
+            
+            <textarea id="markdownEditor" oninput="updateMarkdownPreview()" placeholder="# Type Markdown notes here...&#10;&#10;Use #tags and [[wikilinks]] seamlessly.&#10;&#10;## Key Concept&#10;- Bullet point 1&#10;- Bullet point 2" class="w-full h-80 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500 resize-none leading-relaxed"></textarea>
+
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="exportMarkdownNote()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 flex items-center space-x-1.5">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export .md</span>
+              </button>
+              <button onclick="saveMarkdownNote()" class="px-5 py-2 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold flex items-center space-x-1.5 shadow">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Save Note (+15 XP)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Marked.js Rendered Preview -->
+          <div class="glass-panel rounded-3xl p-5 flex flex-col space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 font-mono">
+                <i data-lucide="eye" class="w-4 h-4 accent-text"></i> LIVE PREVIEW
+              </span>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800">Marked.js Active</span>
+            </div>
+            <div id="markdownPreview" class="w-full h-[400px] overflow-y-auto bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-sm leading-relaxed text-slate-200 prose prose-invert max-w-none">
+              <!-- Rendered Preview Output -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 6: LABS & EXPERIMENTAL SUITE -->
+      <section id="tab-labs" class="tab-content space-y-6">
+        
+        <!-- Stages Bar Switcher -->
+        <div class="glass-panel rounded-3xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="flask-conical" class="w-5 h-5 accent-text"></i>
+            <h2 class="font-bold text-base tracking-wide">EXPERIMENTAL LABS SUITE</h2>
+          </div>
+          
+          <!-- Stage Switch Pills -->
+          <div class="flex flex-wrap gap-2">
+            <button onclick="switchLabStage('stage2')" id="btnStage2" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 accent-text shadow">Stage 2: Adaptive Engine</button>
+            <button onclick="switchLabStage('stage3')" id="btnStage3" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200">Stage 3: Knowledge Suite</button>
+            <button onclick="switchLabStage('stage4')" id="btnStage4" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200">Stage 4: Explore & Sims</button>
+          </div>
+        </div>
+
+        <!-- STAGE 2 CONTAINER -->
+        <div id="labStage2" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- #5 Knowledge Assessment (Diagnostic Quiz) -->
+            <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-xs font-bold font-mono accent-text">#5 Diagnostic Quiz</span>
+                  <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">IndexedDB Storage</span>
+                </div>
+                <h3 class="font-bold text-base text-slate-100 mb-2">Knowledge Assessment</h3>
+                <p id="assessmentQuestion" class="text-xs text-slate-300 mb-4">Q: What is the time complexity of searching in a balanced Binary Search Tree (BST)?</p>
+                <div id="assessmentOptions" class="space-y-2">
+                  <button onclick="answerAssessment(this, true)" class="w-full text-left p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-200">A) O(log n)</button>
+                  <button onclick="answerAssessment(this, false)" class="w-full text-left p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-200">B) O(n)</button>
+                  <button onclick="answerAssessment(this, false)" class="w-full text-left p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-200">C) O(1)</button>
+                </div>
+              </div>
+              <div id="assessmentFeedback" class="mt-4 text-xs font-mono hidden"></div>
+            </div>
+
+            <!-- #1 Adaptive Practice -->
+            <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-xs font-bold font-mono accent-text">#1 Adaptive Practice</span>
+                  <span id="adaptiveTier" class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-bold">Tier: Medium</span>
+                </div>
+                <h3 class="font-bold text-base text-slate-100 mb-2">Dynamic Challenge Tier</h3>
+                <p class="text-xs text-slate-400 mb-4">Adapts difficulty dynamically based on your real-time response accuracy streak.</p>
+                <div class="bg-slate-950/80 rounded-2xl p-4 border border-slate-800 space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Accuracy Streak:</span>
+                    <span id="adaptiveStreak" class="font-mono accent-text font-bold">3 Correct</span>
+                  </div>
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Current Multiplier:</span>
+                    <span class="font-mono text-emerald-400 font-bold">1.5x XP</span>
+                  </div>
+                </div>
+              </div>
+              <button onclick="triggerAdaptiveChallenge()" class="mt-4 px-4 py-2 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold w-full">Generate Adaptive Problem</button>
+            </div>
+
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- #6 Recommendations -->
+            <div class="glass-panel rounded-3xl p-5">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold font-mono accent-text">#6 Deterministic Priority</span>
+                <i data-lucide="compass" class="w-4 h-4 accent-text"></i>
+              </div>
+              <h3 class="font-bold text-base text-slate-100 mb-2">Smart Study Recommendations</h3>
+              <div id="recommendationsList" class="space-y-2 text-xs">
+                <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-slate-200">High Priority: Quantum Physics</span>
+                    <div class="text-[10px] text-slate-400">3 Flashcards flagged for review</div>
+                  </div>
+                  <button onclick="switchTab('cards')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] accent-text font-bold">Review</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- #18 Study Plan Builder -->
+            <div class="glass-panel rounded-3xl p-5">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold font-mono accent-text">#18 Routine Planner</span>
+                <i data-lucide="calendar" class="w-4 h-4 accent-text"></i>
+              </div>
+              <h3 class="font-bold text-base text-slate-100 mb-2">Study Plan Builder</h3>
+              <div class="space-y-3">
+                <input type="text" id="planTitle" placeholder="Plan Name (e.g. Finals Sprint)" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200">
+                <button onclick="createStudyPlan()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700 text-slate-200">Save Plan to IndexedDB</button>
+              </div>
+              <div id="planList" class="mt-3 text-xs space-y-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 3 CONTAINER -->
+        <div id="labStage3" class="space-y-6 hidden">
+          <!-- Knowledge Graph #26 -->
+          <div class="glass-panel rounded-3xl p-5">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="font-bold text-base flex items-center gap-2">
+                  <i data-lucide="share-2" class="w-4 h-4 accent-text"></i>
+                  <span>#26 Interactive Knowledge Graph</span>
+                </h3>
+                <p class="text-xs text-slate-400">Drag canvas to pan • Click nodes to view details</p>
+              </div>
+              <button onclick="resetGraphView()" class="px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold border border-slate-700 text-slate-300">Reset View</button>
+            </div>
+            <div class="w-full h-80 bg-slate-950/90 rounded-2xl border border-slate-800 relative overflow-hidden">
+              <canvas id="knowledgeGraphCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- #30 Books -->
+            <div class="glass-panel rounded-3xl p-5">
+              <span class="text-xs font-bold font-mono accent-text block mb-1">#30 Book Tracker</span>
+              <h4 class="font-bold text-sm text-slate-100 mb-2">Clean Code - Robert Martin</h4>
+              <p class="text-xs text-slate-400 mb-3">Chapter 3: Functions should do one thing.</p>
+              <button onclick="sendTakeawayToCards('Clean Code: Functions should do one thing well.')" class="w-full py-2 rounded-xl accent-gradient-bg text-slate-950 text-xs font-bold shadow">Send Takeaway to Flashcards</button>
+            </div>
+
+            <!-- #31 Journal -->
+            <div class="glass-panel rounded-3xl p-5">
+              <span class="text-xs font-bold font-mono accent-text block mb-1">#31 Reflective Journal</span>
+              <textarea id="journalInput" placeholder="Write learning reflection..." class="w-full h-20 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 resize-none mb-2 focus:outline-none focus:border-cyan-500"></textarea>
+              <button onclick="saveJournalEntry()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700">Save Entry</button>
+            </div>
+
+            <!-- #13 Citations & #28 Skills -->
+            <div class="glass-panel rounded-3xl p-5 space-y-4">
+              <div>
+                <span class="text-xs font-bold font-mono accent-text block mb-1">#13 APA Citation Generator</span>
+                <p class="text-[11px] font-mono text-slate-300 bg-slate-900/80 p-2 rounded-lg border border-slate-800 mb-2">Desai, P. (2026). Quantum Study Vault v4.0. Garage Press.</p>
+                <button onclick="copyCitation('Desai, P. (2026). Quantum Study Vault v4.0. Garage Press.')" class="w-full py-1.5 rounded-xl bg-slate-800 text-xs font-bold text-slate-200 border border-slate-700">Copy APA Citation</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 4 CONTAINER -->
+        <div id="labStage4" class="space-y-6 hidden">
+          
+          <!-- #24 Virtual Labs (HTML5 Physics Canvas Simulation) -->
+          <div class="glass-panel rounded-3xl p-5">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <div>
+                <h3 class="font-bold text-base flex items-center gap-2">
+                  <i data-lucide="activity" class="w-4 h-4 accent-text"></i>
+                  <span>#24 HTML5 Virtual Physics Simulation (Pendulum)</span>
+                </h3>
+                <p class="text-xs text-slate-400">Real-time canvas physics simulation with interactive parameters.</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button id="simPlayBtn" onclick="toggleSimPlay()" class="px-3.5 py-1.5 rounded-xl accent-gradient-bg font-extrabold text-xs text-slate-950 shadow">Pause</button>
+                <button onclick="resetSim()" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold border border-slate-700 text-slate-300">Reset</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <!-- Canvas -->
+              <div class="lg:col-span-8 h-72 bg-slate-950/90 rounded-2xl border border-slate-800 relative overflow-hidden">
+                <canvas id="virtualLabCanvas" class="w-full h-full"></canvas>
+              </div>
+
+              <!-- Controls -->
+              <div class="lg:col-span-4 bg-slate-900/60 rounded-2xl p-4 border border-slate-800 space-y-4">
+                <div>
+                  <label class="text-xs font-mono text-slate-400 flex justify-between mb-1">
+                    <span>Gravity (g):</span>
+                    <span id="valGravity" class="accent-text font-bold">9.8 m/s²</span>
+                  </label>
+                  <input type="range" min="1" max="25" step="0.5" value="9.8" oninput="updateSimParam('gravity', this.value)" class="w-full accent-cyan-400 cursor-pointer">
+                </div>
+
+                <div>
+                  <label class="text-xs font-mono text-slate-400 flex justify-between mb-1">
+                    <span>Length (L):</span>
+                    <span id="valLength" class="accent-text font-bold">1.2 m</span>
+                  </label>
+                  <input type="range" min="0.5" max="3" step="0.1" value="1.2" oninput="updateSimParam('length', this.value)" class="w-full accent-cyan-400 cursor-pointer">
+                </div>
+
+                <div>
+                  <label class="text-xs font-mono text-slate-400 flex justify-between mb-1">
+                    <span>Damping (Air Friction):</span>
+                    <span id="valDamping" class="accent-text font-bold">0.005</span>
+                  </label>
+                  <input type="range" min="0" max="0.03" step="0.001" value="0.005" oninput="updateSimParam('damping', this.value)" class="w-full accent-cyan-400 cursor-pointer">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- #23/#29 Clinical Triage Scenario -->
+            <div class="glass-panel rounded-3xl p-5">
+              <span class="text-xs font-bold font-mono accent-text block mb-1">#23/#29 Interactive Scenario</span>
+              <h4 class="font-bold text-base text-slate-100 mb-2">Clinical Triage Simulation</h4>
+              <p class="text-xs text-slate-300 mb-4">Patient arrives with acute chest tightness and BP 150/90. What is your immediate diagnostic action?</p>
+              <div class="space-y-2">
+                <button onclick="selectScenarioOption(this, true)" class="w-full text-left p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 hover:border-cyan-400">A) Order 12-lead ECG and Troponin panel</button>
+                <button onclick="selectScenarioOption(this, false)" class="w-full text-left p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 hover:border-cyan-400">B) Administer oral antacid and monitor</button>
+              </div>
+            </div>
+
+            <!-- #27 Discovery REST Wikipedia Fetch -->
+            <div class="glass-panel rounded-3xl p-5">
+              <span class="text-xs font-bold font-mono accent-text block mb-1">#27 Live Discovery</span>
+              <h4 class="font-bold text-base text-slate-100 mb-2">Concept Deep Dive</h4>
+              <div class="flex gap-2 mb-3">
+                <input type="text" id="wikiTopicInput" placeholder="Topic (e.g. Superconductivity)" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200">
+                <button onclick="fetchWikipediaSummary()" class="px-3.5 py-1.5 rounded-xl accent-gradient-bg font-extrabold text-xs text-slate-950">Fetch</button>
+              </div>
+              <div id="wikiResult" class="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 text-xs text-slate-300 max-h-36 overflow-y-auto">
+                Enter a topic above to query live Wikipedia REST summary.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- 6-TAB FLOATING BOTTOM GLASS DOCK -->
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-panel rounded-full p-2 border border-slate-700/80 shadow-2xl flex items-center space-x-1 sm:space-x-2">
+      <button onclick="switchTab('focus')" id="dock-focus" class="dock-btn active px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold accent-text transition-all">
+        <i data-lucide="clock" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Focus</span>
+      </button>
+      <button onclick="switchTab('map')" id="dock-map" class="dock-btn px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="map" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Study Map</span>
+      </button>
+      <button onclick="switchTab('cards')" id="dock-cards" class="dock-btn px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Cards</span>
+      </button>
+      <button onclick="switchTab('links')" id="dock-links" class="dock-btn px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="link" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Smart Links</span>
+      </button>
+      <button onclick="switchTab('notes')" id="dock-notes" class="dock-btn px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Notes</span>
+      </button>
+      <button onclick="switchTab('labs')" id="dock-labs" class="dock-btn px-3 sm:px-4 py-2.5 rounded-full flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="flask-conical" class="w-4 h-4"></i>
+        <span class="hidden md:inline">Labs</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Exam Countdown Radar Modal -->
+  <div id="examModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-slate-700 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i data-lucide="radar" class="w-5 h-5 accent-text"></i>
+          <span>EXAM COUNTDOWN RADAR</span>
+        </h3>
+        <button onclick="closeModal('examModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="examList" class="space-y-3 max-h-60 overflow-y-auto">
+        <!-- JS rendered -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 space-y-2">
+        <span class="text-xs font-bold text-slate-300">Add Upcoming Exam</span>
+        <input type="text" id="newExamTitle" placeholder="Exam Name (e.g. Organic Chemistry)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200">
+        <input type="date" id="newExamDate" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200">
+        <button onclick="addExam()" class="w-full py-2 rounded-xl accent-gradient-bg font-extrabold text-xs text-slate-950">Add Exam to Radar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database & Offline Backup Vault Modal -->
+  <div id="databaseModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-lg w-full border border-slate-700 space-y-5">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i data-lucide="database" class="w-5 h-5 accent-text"></i>
+          <span>DATABASE & OFFLINE BACKUP VAULT</span>
+        </h3>
+        <button onclick="closeModal('databaseModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <!-- Live Storage Metrics -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 font-mono block">localStorage Size</span>
+          <span id="localStoreSize" class="text-base font-extrabold accent-text font-mono">14.2 KB</span>
+        </div>
+        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 font-mono block">IndexedDB Stores</span>
+          <span id="idbStoreCount" class="text-base font-extrabold text-purple-400 font-mono">12 Active Stores</span>
+        </div>
+      </div>
+
+      <!-- Import / Export Actions -->
+      <div class="space-y-3 pt-2">
+        <button onclick="exportVaultJSON()" class="w-full py-2.5 rounded-xl accent-gradient-bg font-extrabold text-xs text-slate-950 flex items-center justify-center gap-2 shadow">
+          <i data-lucide="download" class="w-4 h-4"></i> Export Full Vault Backup (.JSON)
+        </button>
+        
+        <div class="flex gap-2">
+          <label class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4"></i> Import JSON Backup
+            <input type="file" id="importFileInput" accept=".json" onchange="importVaultJSON(event)" class="hidden">
+          </label>
+          <button onclick="rollbackImport()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/40" title="Rollback last imported snapshot">
+            Rollback
+          </button>
+        </div>
+
+        <button onclick="confirmResetVault()" class="w-full py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30">
+          Reset Vault to Default
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Flashcard Modal -->
+  <div id="addCardModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-slate-700 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold">Add New Flashcard</h3>
+        <button onclick="closeModal('addCardModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="text" id="newCardTopic" placeholder="Topic Tag (e.g. Physics)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+      <textarea id="newCardQuestion" placeholder="Question..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 h-20 resize-none"></textarea>
+      <textarea id="newCardAnswer" placeholder="Answer..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 h-20 resize-none"></textarea>
+      <button onclick="saveNewCard()" class="w-full py-2.5 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold shadow">Save Card</button>
+    </div>
+  </div>
+
+  <!-- Add Link Modal -->
+  <div id="addLinkModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-slate-700 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold">Add Smart Resource Link</h3>
+        <button onclick="closeModal('addLinkModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="text" id="newLinkTitle" placeholder="Title..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+      <input type="url" id="newLinkURL" placeholder="https://..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+      <select id="newLinkCategory" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+        <option value="Lectures">Lectures</option>
+        <option value="PDFs">PDFs</option>
+        <option value="Websites">Websites</option>
+        <option value="Revision">Revision</option>
+      </select>
+      <button onclick="saveNewLink()" class="w-full py-2.5 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold shadow">Add Link</button>
+    </div>
+  </div>
+
+  <!-- Add Mnemonic Modal -->
+  <div id="addMnemonicModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-slate-700 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold">Add Quick Mnemonic / Formula</h3>
+        <button onclick="closeModal('addMnemonicModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="text" id="newMnemonicTitle" placeholder="Concept Title (e.g. Euler's Formula)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+      <input type="text" id="newMnemonicFormula" placeholder="Formula or Mnemonic text..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+      <button onclick="saveNewMnemonic()" class="w-full py-2.5 rounded-xl accent-gradient-bg text-slate-950 text-xs font-extrabold shadow">Save Mnemonic</button>
+    </div>
+  </div>
+
+  <!-- MODULAR SCRIPTS (STAGES 2–5) -->
+  <script src="./js/storage.js?v=3"></script>
+  <script src="./js/audio.js?v=3"></script>
+  <script src="./js/canvas.js?v=3"></script>
+  <script src="./js/features.js?v=4"></script>
+  <script src="./js/labs.js?v=3"></script>
+  <script src="./js/app.js?v=3"></script>
+</body>
+</html>
