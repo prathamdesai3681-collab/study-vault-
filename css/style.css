@@ -1,0 +1,304 @@
+/* ==========================================================================
+   GARAGE'S STUDY VAULT v4.0 — OBSIDIAN DARK + SWISS EDITORIAL
+   Step 2B: Core Visual System & Two-Accent Theme Tokens
+   ========================================================================== */
+
+/* Base Obsidian Surfaces, Hairlines & Editorial Typography Tokens */
+:root {
+  --bg-base: #0c0d10;
+  --bg-surface: #13151a;
+  --bg-elevated: #1a1d24;
+  --bg-inset: #0e1015;
+
+  --border-subtle: #262a34;
+  --border-strong: #3a404f;
+
+  --text-primary: #f3f4f6;
+  --text-secondary: #a1a7b3;
+  --text-muted: #7c8392;
+
+  /* Default Fallback Accent: Slate Blue */
+  --accent: #7b9cc9;
+  --accent-hover: #92b0d8;
+  --accent-soft: rgba(123, 156, 201, 0.14);
+  --accent-border-soft: rgba(123, 156, 201, 0.38);
+  --accent-contrast: #0c0d10;
+  --accent-gradient: #7b9cc9;
+  --ring-color: #7b9cc9;
+}
+
+/* Primary Theme: Slate Blue (Default) + Legacy CSS Fallback Aliases */
+.theme-slate,
+.theme-cyan,
+.theme-violet,
+.theme-matrix,
+.theme-crimson {
+  --accent: #7b9cc9;
+  --accent-hover: #92b0d8;
+  --accent-soft: rgba(123, 156, 201, 0.14);
+  --accent-border-soft: rgba(123, 156, 201, 0.38);
+  --accent-contrast: #0c0d10;
+  --accent-gradient: #7b9cc9;
+  --ring-color: #7b9cc9;
+}
+
+/* Alternative Theme: Warm Amber */
+.theme-amber {
+  --accent: #d99b52;
+  --accent-hover: #e5ae6b;
+  --accent-soft: rgba(217, 155, 82, 0.14);
+  --accent-border-soft: rgba(217, 155, 82, 0.4);
+  --accent-contrast: #0c0d10;
+  --accent-gradient: #d99b52;
+  --ring-color: #d99b52;
+}
+
+/* Base Document Typography & Surface */
+html {
+  background-color: var(--bg-base);
+  color-scheme: dark;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Subtle Cellular Canvas Attenuation for Long Reading Comfort */
+#cellCanvas {
+  opacity: 0.14 !important;
+}
+
+/* Swiss Editorial Surfaces (Preserves .glass-panel class hook) */
+.glass-panel {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.glass-panel-hover {
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.glass-panel-hover:hover {
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+/* Retire Neon Glows Cleanly */
+.neon-glow {
+  box-shadow: none;
+}
+
+.neon-text-glow {
+  text-shadow: none;
+}
+
+/* Accent Utility Hooks */
+.accent-bg {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.accent-text {
+  color: var(--accent);
+}
+
+.accent-border {
+  border-color: var(--accent);
+}
+
+.accent-gradient-bg {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  transition: background-color 0.18s ease, opacity 0.18s ease;
+}
+
+button.accent-gradient-bg:hover,
+a.accent-gradient-bg:hover {
+  background: var(--accent-hover);
+}
+
+/* Two-Accent Theme Toggle Control (Ready for Step 2C) */
+.theme-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 0.75rem;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  gap: 2px;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.theme-toggle-btn.is-active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-border-soft);
+}
+
+/* Accessible Focus States & Accent-Matched Form Controls */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent) !important;
+}
+
+input[type="checkbox"],
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+/* Navigation Dock Active State */
+.dock-btn {
+  min-width: 44px;
+  min-height: 40px;
+  justify-content: center;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.dock-btn.active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Calm Architectural Focus Timer Rings */
+.spin-ring-cw {
+  animation: spinCW 36s linear infinite;
+  transform-origin: center;
+}
+
+.spin-ring-ccw {
+  animation: spinCCW 28s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spinCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinCCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+/* Calm Solid XP Bar (Replaces Distracting Shimmer) */
+.xp-shimmer {
+  background: var(--accent);
+  animation: none;
+}
+
+/* 3D Flashcard Flip */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Subtle Editorial Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Tab Content Transitions */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+  animation: fadeIn 0.22s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle Status Indicator Dot */
+.pulse-dot {
+  animation: pulseDot 2.8s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
